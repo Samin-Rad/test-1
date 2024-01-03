@@ -1,0 +1,92 @@
+Perfom Task with Dockerfile:
+
+1. 
+
+git clone https://github.com/amirpaakdaman/simple-docker-app
+cd simple-docker-app
+
+
+2. 
+
+dockerfile
+FROM node:14-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["npm", "start"]
+
+
+3. 
+
+docker build -t my-web-app .
+
+
+4. Create a Docker network:
+
+docker network create my-network
+
+
+5. Run the web application container:
+
+docker run -d --name my-web-app --network my-network my-web-app
+
+
+6. Install NGINX and Certbot:
+
+
+apt-get update
+apt-get install -y nginx
+
+apt-get install -y certbot python3-certbot-nginx
+
+
+7.
+
+rm /etc/nginx/sites-available/default
+rm /etc/nginx/sites-enabled/default
+
+ Create  `/etc/nginx/sites-available/my-web-app:
+
+server {
+    listen 80;
+    server_name majdi.private-line.net;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name majdi.private-line.net;
+
+    ssl_certificate /etc/letsencrypt/live/majdi.private-line.net/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/majdi.private-line.net/privkey.pem;
+
+    location / {
+        proxy_pass http://my-web-app:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+systemctl enable nginx 
+
+nginx -t
+
+8.
+
+certbot certonly --non-interactive --nginx --agree-tos --email majdi.azadeh2012@gmail.com -d majdi.private-line.net
+
+9. 
+
+certbot renew --quiet
+
+
+10.
+
+systemctl restart nginx
+
